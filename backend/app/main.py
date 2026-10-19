@@ -1,7 +1,14 @@
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from pydantic import EmailStr
+from fastapi import Depends, HTTPException, status
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+from app.database import SessionLocal
+from app.models import User
+from app.security import hash_password, verify_password
+from app.auth import create_access_token, get_current_user_id
 
 from app.chat_analysis import (
     parse_chat_text,
@@ -26,6 +33,17 @@ app.add_middleware(
 )
 
 
+class RegisterRequest(BaseModel):
+    email: EmailStr
+    username: str = Field(min_length=2, max_length=50)
+    password: str = Field(min_length=8, max_length=128)
+
+    
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=1, max_length=128)
+
+
 class ConversationRequest(BaseModel):
     conversation: str = Field(min_length=1, max_length=10000)
     user_name: str = Field(min_length=1, max_length=100)
@@ -42,13 +60,106 @@ class AnalysisResponse(BaseModel):
     average_reply_time_minutes: float | None = None
 
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
 
 
+@app.post("/api/register", status_code=status.HTTP_201_CREATED)
+def register_user(
+    request: RegisterRequest,
+    db: Session = Depends(get_db),
+):
+    email = str(request.email).strip().lower()
+    username = request.username.strip()
+
+    if len(username) < 2:
+        raise HTTPException(
+            status_code=422,
+            detail="Username must contain at least 2 non-space characters.",
+        )
+
+    existing_user = (
+        db.query(User)
+        .filter(func.lower(User.email) == email)
+        .first()
+    )
+
+    if existing_user:
+        raise HTTPException(
+            status_code=409,
+            detail="Email is already registered.",
+        )
+
+    user = User(
+        email=email,
+        username=username,
+        password_hash=hash_password(request.password),
+    )
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "message": "Registration successful.",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "username": user.username,
+        },
+    }
+
+
+
+@app.post("/api/login")
+def login_user(
+    request: LoginRequest,
+    db: Session = Depends(get_db),
+):
+    email = str(request.email).strip().lower()
+
+    user = (
+        db.query(User)
+        .filter(func.lower(User.email) == email)
+        .first()
+    )
+
+    if user is None or not verify_password(
+        request.password,
+        user.password_hash,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password.",
+        )
+
+    
+    access_token = create_access_token(user.id)
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "message": "Login successful.",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "username": user.username,
+        },
+    }
+
+
+
 @app.post("/api/analyze", response_model=AnalysisResponse)
-def analyze_conversation(request: ConversationRequest):
+def analyze_conversation(request: ConversationRequest, current_user: int = Depends(get_current_user_id),):
     conversation = request.conversation.strip()
 
     messages = parse_chat_text(conversation)
@@ -95,3 +206,22 @@ def analyze_conversation(request: ConversationRequest):
             else None
         ),
     )
+
+@app.get("/api/me")
+def get_my_profile(
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    user = db.get(User, user_id)
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User no longer exists.",
+        )
+
+    return {
+        "id": user.id,
+        "email": user.email,
+        "username": user.username,
+    }

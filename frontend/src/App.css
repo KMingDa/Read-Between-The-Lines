@@ -371,3 +371,237 @@ textarea:focus {
     font-size: 13px;
   }
 }
+
+/* Authentication page */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: #FAF5ED;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 44px 40px;
+  background: #FFFDF9;
+  border: 1px solid #EFE5D8;
+  border-radius: 24px;
+  box-shadow: 0 16px 48px rgba(91, 66, 45, 0.07);
+}
+
+.auth-card .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 40px;
+  color: #594638;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  text-decoration: none;
+}
+
+.auth-card .brand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+  background: #E9D9C6;
+  color: #785C46;
+  font-family: Georgia, serif;
+  font-size: 21px;
+}
+
+.auth-card .eyebrow {
+  margin-bottom: 12px;
+  color: #A0846C;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.auth-card h1 {
+  margin: 0 0 14px;
+  color: #49382D;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.8px;
+}
+
+.auth-description {
+  margin-bottom: 28px;
+  color: #6b6b65;
+  line-height: 1.6;
+}
+
+.auth-card form {
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* Warm cream input fields */
+.auth-card .input-label {
+  display: block;
+  margin-bottom: 8px;
+  color: #6F5745;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.auth-card input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 13px 15px;
+  border: 1px solid #E6D9CA;
+  border-radius: 12px;
+  background: #FFFCF7;
+  color: #49382D;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.auth-card input::placeholder {
+  color: #B3A293;
+}
+
+.auth-card input:focus {
+  border-color: #A0846C;
+  box-shadow: 0 0 0 3px rgba(160, 132, 108, 0.14);
+}
+
+.auth-card .analyze-button {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.auth-message {
+  margin: 0 0 16px;
+  color: #b42318;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.auth-switch {
+  margin-top: 24px;
+  text-align: left;
+  color: #6b6b65;
+  font-size: 14px;
+}
+
+.auth-card .analyze-button {
+  width: 100%;
+  margin-top: 10px;
+  border: none;
+  border-radius: 13px;
+  padding: 14px 18px;
+  background: #785C46;
+  color: #FFFDF9;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.auth-card .analyze-button:hover:not(:disabled) {
+  background: #624A38;
+  transform: translateY(-1px);
+}
+
+.auth-card .analyze-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Sign-up and login switch */
+.auth-card .auth-switch {
+  color: #8A7869;
+  font-size: 13px;
+}
+
+.auth-card .auth-switch-button {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #785C46;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+
+/* Auth card spacing */
+.auth-card form {
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-card .brand {
+  margin-bottom: 32px;
+}
+
+.auth-card .auth-description {
+  margin-bottom: 26px;
+  line-height: 1.7;
+}
+
+.auth-card .input-label {
+  margin-bottom: 8px;
+}
+
+.auth-card input {
+  margin-bottom: 18px;
+}
+
+.auth-card .auth-switch {
+  margin-top: 24px;
+  margin-bottom: 0;
+  text-align: center;
+}
+
+/* Mobile layout */
+@media (max-width: 480px) {
+  .auth-container {
+    padding: 24px 16px;
+  }
+
+  .auth-card {
+    padding: 32px 24px;
+    border-radius: 20px;
+  }
+
+  .auth-card h1 {
+    font-size: 30px;
+  }
+
+  .auth-card .brand {
+    margin-bottom: 28px;
+  }
+}
+
+.logout-button {
+  padding: 9px 14px;
+  border: 1px solid #E6D9CA;
+  border-radius: 10px;
+  background: #FFFDF9;
+  color: #785C46;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.logout-button:hover {
+  background: #F0E5D8;
+}
