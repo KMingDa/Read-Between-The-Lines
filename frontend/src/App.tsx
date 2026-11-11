@@ -91,10 +91,11 @@ function App() {
     setAnalysis(null)
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/analyze', {
+      const response = await fetch(`${API_BASE_URL}/api/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           conversation: conversation.trim(),
@@ -102,21 +103,26 @@ function App() {
         }),
       })
 
+      if (response.status === 401) {
+        throw new Error('Your session has expired. Please log in again.')
+      }
+
       if (!response.ok) {
         throw new Error(`Request failed with status ${response.status}`)
       }
 
       const result: AnalysisResult = await response.json()
       setAnalysis(result)
-    } catch {
+    } catch (error) {
       setError(
-        'Unable to connect to the backend. Make sure the FastAPI server is running and try again.',
+        error instanceof Error
+          ? error.message
+          : 'Unable to connect to the backend. Make sure the FastAPI server is running and try again.',
       )
     } finally {
       setIsLoading(false)
     }
   }
-
   
   async function handleAuth() {
     if (authLoading) return
