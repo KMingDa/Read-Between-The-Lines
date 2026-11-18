@@ -1,7 +1,8 @@
 import os
 
-# Must run before any `app` import: load_dotenv() never overrides variables that
-# are already set, so the app never sees the development DATABASE_URL or secret.
+# Set before any `app` import. Tests never read the real .env, and the app only
+# ever sees this throwaway SQLite URL and secret.
+os.environ["PYTHON_DOTENV_DISABLED"] = "1"
 os.environ["DATABASE_URL"] = "sqlite+pysqlite:///:memory:"
 os.environ["JWT_SECRET_KEY"] = "test-secret-not-used-anywhere-else-0123456789"
 
@@ -11,12 +12,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.database import Base, engine as app_engine
 from app.api.deps import get_db
+from app.core.config import get_settings
+from app.infrastructure.models import Base
 from app.main import app
-from app import models  # noqa: F401  (registers the User table on Base.metadata)
 
-assert app_engine.url.drivername.startswith("sqlite"), "refusing to run against a real database"
+assert get_settings().database_url.startswith("sqlite"), "refusing to run against a real database"
 
 
 @pytest.fixture
@@ -33,13 +34,16 @@ def db_session_factory():
 
 
 @pytest.fixture
+def db(db_session_factory):
+    with db_session_factory() as session:
+        yield session
+
+
+@pytest.fixture
 def client(db_session_factory):
     def override_get_db():
-        db = db_session_factory()
-        try:
-            yield db
-        finally:
-            db.close()
+        with db_session_factory() as session:
+            yield session
 
     app.dependency_overrides[get_db] = override_get_db
     yield TestClient(app)

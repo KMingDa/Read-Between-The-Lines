@@ -1,9 +1,10 @@
-from app.database import Base, engine
-from app.models import User  # noqa: F401
+from app.infrastructure.database import get_engine
+from app.infrastructure.models import Base
 
 
 def init_db():
-    Base.metadata.create_all(bind=engine)
+    # Creates missing tables only; existing tables and rows are left untouched.
+    Base.metadata.create_all(bind=get_engine())
     print("Database tables created successfully!")
 
 
