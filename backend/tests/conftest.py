@@ -12,7 +12,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.database import Base, engine as app_engine
-from app.main import app, get_db
+from app.api.deps import get_db
+from app.main import app
 from app import models  # noqa: F401  (registers the User table on Base.metadata)
 
 assert app_engine.url.drivername.startswith("sqlite"), "refusing to run against a real database"

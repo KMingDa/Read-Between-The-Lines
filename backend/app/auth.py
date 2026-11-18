@@ -1,24 +1,10 @@
-import os
 from datetime import datetime, timedelta, timezone
-from fastapi import Depends
-from fastapi.security import OAuth2PasswordBearer
 
 import jwt
-from dotenv import load_dotenv
 from fastapi import HTTPException, status
 from jwt.exceptions import InvalidTokenError
 
-
-load_dotenv()
-
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-
-if not JWT_SECRET_KEY:
-    raise RuntimeError("JWT_SECRET_KEY is missing from .env")
-
-JWT_ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
+from app.core.config import ACCESS_TOKEN_EXPIRE_MINUTES, JWT_ALGORITHM, JWT_SECRET_KEY
 
 
 def create_access_token(user_id: int) -> str:
@@ -62,9 +48,3 @@ def get_user_id_from_token(token: str) -> int:
             detail="Invalid or expired token.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-    
-def get_current_user_id(
-    token: str = Depends(oauth2_scheme),
-) -> int:
-    return get_user_id_from_token(token)

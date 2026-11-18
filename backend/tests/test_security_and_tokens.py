@@ -4,7 +4,8 @@ import jwt
 import pytest
 from fastapi import HTTPException
 
-from app.auth import JWT_SECRET_KEY, create_access_token, get_user_id_from_token
+from app.auth import create_access_token, get_user_id_from_token
+from app.core.config import JWT_SECRET_KEY
 from app.security import hash_password, verify_password
 
 
