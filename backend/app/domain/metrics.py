@@ -10,9 +10,9 @@ def analyze_reply_intervals(messages: Sequence[Message], user_name: str) -> Repl
 
     A reply is a message from someone else directly after one of the user's messages.
     For a burst of messages from the user, the time counts from the last one.
-    The user is matched by name, ignoring case and surrounding spaces.
+    The user is matched by name, ignoring case and surrounding spaces. System messages are ignored.
     """
-    ordered = sorted(messages, key=lambda message: message.timestamp)
+    ordered = sorted((m for m in messages if m.sender is not None), key=lambda m: m.timestamp)
     user = user_name.strip().casefold()
 
     intervals = tuple(

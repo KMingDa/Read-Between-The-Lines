@@ -19,3 +19,11 @@ class ConflictError(AppError):
 
 class AuthenticationError(AppError):
     """Credentials or token are missing, wrong, expired or no longer valid."""
+
+
+class NotFoundError(AppError):
+    """The resource does not exist or belongs to another user; the two look the same on purpose."""
+
+
+class PayloadTooLargeError(AppError):
+    """An upload is larger than allowed."""

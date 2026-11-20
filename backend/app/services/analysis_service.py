@@ -18,7 +18,8 @@ class ConversationAnalysis:
 
 
 def analyze_conversation(conversation: str, user_name: str) -> ConversationAnalysis:
-    messages = parse_whatsapp_chat(conversation.strip())
+    parsed = parse_whatsapp_chat(conversation.strip())
+    messages = [message for message in parsed.messages if message.sender is not None]  # not system
     reply_intervals = analyze_reply_intervals(messages, user_name)
 
     if not messages:

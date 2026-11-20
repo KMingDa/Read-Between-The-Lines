@@ -5,14 +5,23 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routes import analysis, auth
+from app.api.routes import analysis, auth, conversations
 from app.core.config import CORS_ORIGINS, get_settings
-from app.core.exceptions import AppError, AuthenticationError, ConflictError, InvalidInputError
+from app.core.exceptions import (
+    AppError,
+    AuthenticationError,
+    ConflictError,
+    InvalidInputError,
+    NotFoundError,
+    PayloadTooLargeError,
+)
 
 ERROR_STATUS_CODES: dict[type[AppError], int] = {
     InvalidInputError: 422,
     ConflictError: 409,
     AuthenticationError: 401,
+    NotFoundError: 404,
+    PayloadTooLargeError: 413,
 }
 
 
@@ -47,6 +56,7 @@ async def handle_app_error(_: Request, error: AppError) -> JSONResponse:
 
 app.include_router(auth.router)
 app.include_router(analysis.router)
+app.include_router(conversations.router)
 
 
 @app.get("/health")

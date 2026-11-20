@@ -17,5 +17,26 @@ services:
       timeout: 5s
       retries: 5
 
+  # Disposable database for `pytest -m postgres` (migration tests). Starts only with
+  # `docker compose --profile test up -d db-test`, keeps its data in memory, shares nothing
+  # with `db`, and is reachable only from this machine, so it needs no password.
+  db-test:
+    image: postgres:17
+    container_name: read-between-lines-db-test
+    profiles: ["test"]
+    environment:
+      POSTGRES_DB: read_between_lines_test
+      POSTGRES_USER: test
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "127.0.0.1:5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d read_between_lines_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
 volumes:
   postgres_data:

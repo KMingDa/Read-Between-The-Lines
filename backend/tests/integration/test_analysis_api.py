@@ -71,6 +71,20 @@ def test_analyze_counts_multiline_messages_once(client, auth_headers):
     assert body["reply_times"] == [7.0]
 
 
+def test_analyze_ignores_system_messages_in_a_24_hour_export(client, auth_headers):
+    chat = (
+        "10/10/2026, 21:00 - Messages and calls are end-to-end encrypted.\n"
+        "10/10/2026, 21:01 - Jamie: hi\n"
+        "10/10/2026, 21:02 - Taylor changed the group name\n"
+        "10/10/2026, 21:06 - Taylor: hey\n"
+    )
+
+    body = analyze(client, auth_headers, conversation=chat).json()
+
+    assert body["parsed_message_count"] == 2
+    assert body["reply_details"] == [{"from": "Taylor", "to": "Jamie", "minutes": 5.0}]
+
+
 def test_analyze_unparseable_text_returns_zero_messages(client, auth_headers):
     body = analyze(client, auth_headers, conversation="hello there").json()
 

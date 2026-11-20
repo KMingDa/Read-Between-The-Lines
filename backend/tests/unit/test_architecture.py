@@ -1,6 +1,8 @@
-"""Dependency direction: API -> services -> domain. Inner layers must not import outer ones."""
+"""Dependency direction (API -> services -> domain; inner layers never import outer ones) and
+source hygiene."""
 
 import ast
+import unicodedata
 from pathlib import Path
 
 import pytest
@@ -35,3 +37,21 @@ def test_layer_does_not_import_outer_layers_or_frameworks(layer):
     ]
 
     assert violations == []
+
+
+def test_python_sources_contain_no_invisible_characters():
+    # Bidi controls and other invisible format characters (Unicode "Cf") can make code read
+    # differently from how it runs ("Trojan Source"); write them as \u escapes instead.
+    backend = APP_DIR.parent
+    files = [p for folder in ("app", "tests", "migrations") for p in (backend / folder).rglob("*.py")]
+
+    found = [
+        f"{path.relative_to(backend)}:{number}: U+{ord(char):04X}"
+        for path in files
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
+        for char in line
+        if unicodedata.category(char) == "Cf"
+    ]
+
+    assert files
+    assert found == []

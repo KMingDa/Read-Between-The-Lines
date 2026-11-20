@@ -22,8 +22,24 @@ CHAT = """\
 NO_INTERVALS = ReplyIntervalAnalysis(intervals=(), average_minutes=None)
 
 
+def chat(text):
+    return parse_whatsapp_chat(text).messages
+
+
 def minutes(analysis):
     return [interval.minutes for interval in analysis.intervals]
+
+
+def test_system_messages_between_turns_are_ignored():
+    messages = [
+        Message(timestamp=datetime(2026, 1, 1, 10, 0), sender="Jamie", content="hi"),
+        Message(timestamp=datetime(2026, 1, 1, 10, 1), sender=None, content="Taylor joined"),
+        Message(timestamp=datetime(2026, 1, 1, 10, 4), sender="Taylor", content="hey"),
+    ]
+
+    result = analyze_reply_intervals(messages, "Jamie")
+
+    assert result.intervals == (ReplyInterval(replier="Taylor", replied_to="Jamie", minutes=4.0),)
 
 
 def test_empty_messages_return_no_intervals():
@@ -31,7 +47,7 @@ def test_empty_messages_return_no_intervals():
 
 
 def test_measures_other_persons_replies_to_the_user():
-    result = analyze_reply_intervals(parse_whatsapp_chat(CHAT), "Jamie")
+    result = analyze_reply_intervals(chat(CHAT), "Jamie")
 
     assert result == ReplyIntervalAnalysis(
         intervals=(
@@ -44,13 +60,13 @@ def test_measures_other_persons_replies_to_the_user():
 
 def test_reply_is_timed_from_users_last_message_in_a_burst():
     # Jamie wrote at 9:00 and 9:05; Taylor's 9:15 reply counts as 10 min, not 15.
-    result = analyze_reply_intervals(parse_whatsapp_chat(CHAT), "Jamie")
+    result = analyze_reply_intervals(chat(CHAT), "Jamie")
 
     assert minutes(result)[0] == 10.0
 
 
 def test_burst_from_the_other_person_counts_once():
-    messages = parse_whatsapp_chat(
+    messages = chat(
         "10/10/2026, 9:00 AM - Jamie: hi\n"
         "10/10/2026, 9:04 AM - Taylor: hey\n"
         "10/10/2026, 9:06 AM - Taylor: sorry\n"
@@ -61,7 +77,7 @@ def test_burst_from_the_other_person_counts_once():
 
 
 def test_users_own_replies_are_not_counted():
-    result = analyze_reply_intervals(parse_whatsapp_chat(CHAT), "Taylor")
+    result = analyze_reply_intervals(chat(CHAT), "Taylor")
 
     assert result.intervals == (ReplyInterval(replier="Jamie", replied_to="Taylor", minutes=5.0),)
     assert result.average_minutes == 5.0
@@ -69,18 +85,18 @@ def test_users_own_replies_are_not_counted():
 
 @pytest.mark.parametrize("user_name", ["jamie", "  JAMIE  "])
 def test_user_name_match_ignores_case_and_surrounding_spaces(user_name):
-    result = analyze_reply_intervals(parse_whatsapp_chat(CHAT), user_name)
+    result = analyze_reply_intervals(chat(CHAT), user_name)
 
     assert minutes(result) == [10.0, 30.0]
 
 
 @pytest.mark.parametrize("user_name", ["Jamie Lee", "Jam", "", "   "])
 def test_unknown_or_blank_user_name_gives_no_intervals(user_name):
-    assert analyze_reply_intervals(parse_whatsapp_chat(CHAT), user_name) == NO_INTERVALS
+    assert analyze_reply_intervals(chat(CHAT), user_name) == NO_INTERVALS
 
 
 def test_reply_across_midnight():
-    messages = parse_whatsapp_chat(
+    messages = chat(
         "10/10/2026, 11:59 PM - Jamie: night\n"
         "11/10/2026, 12:01 AM - Taylor: still up\n"
     )
@@ -89,7 +105,7 @@ def test_reply_across_midnight():
 
 
 def test_same_minute_reply_counts_as_zero():
-    messages = parse_whatsapp_chat(
+    messages = chat(
         "10/10/2026, 9:00 AM - Jamie: hi\n"
         "10/10/2026, 9:00 AM - Taylor: hi\n"
     )
@@ -98,13 +114,13 @@ def test_same_minute_reply_counts_as_zero():
 
 
 def test_unsorted_input_is_sorted_before_measuring():
-    messages = list(reversed(parse_whatsapp_chat(CHAT)))
+    messages = list(reversed(chat(CHAT)))
 
     assert minutes(analyze_reply_intervals(messages, "Jamie")) == [10.0, 30.0]
 
 
 def test_multiline_messages_do_not_change_intervals():
-    messages = parse_whatsapp_chat(
+    messages = chat(
         "10/10/2026, 9:00 AM - Jamie: line one\n"
         "line two\n"
         "10/10/2026, 9:07 AM - Taylor: reply\n"
@@ -117,7 +133,7 @@ def test_multiline_messages_do_not_change_intervals():
 def test_out_of_order_sample_file():
     text = (DATA_DIR / "whatsapp_invalid_sample.txt").read_text(encoding="utf-8")
 
-    result = analyze_reply_intervals(parse_whatsapp_chat(text), "Jamie")
+    result = analyze_reply_intervals(chat(text), "Jamie")
 
     # Sorted: Jamie 2:00, 2:01, 2:02 | Taylor 2:06, 2:08 | Jamie 2:10
     assert result.intervals == (ReplyInterval(replier="Taylor", replied_to="Jamie", minutes=4.0),)
